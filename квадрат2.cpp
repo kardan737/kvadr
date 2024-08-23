@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <locale.h>
-#include <string>
+#include <string.h>
 #include <ctype.h>
 
 enum ErrorType
@@ -64,13 +64,23 @@ int main()
     bool play_prog = true;
     while (play_prog == true)
         {
-        printf("\nпроверка или решение собственного уравнения?    \n"
-               "если проверка введите 1                         \n"    // tests (t)
-               "если собственное введите 2                      \n"
-               "если хотите закончить работу программы введите 3\n");  // solve (s)
+        printf("\nпроверка или решение собственного уравнения?     \n"
+               "если проверка введите test                         \n"
+               "если собственное введите solve                     \n"
+               "если хотите закончить работу программы введите exit\n");
 
-        Options option = 0;                 // enum
-        scanf("%d", &option);
+        int option = 0;
+
+        char slovo[5];                 //????? enum
+        scanf("%s", slovo);
+
+        if (strcmp(slovo, "test") == 0)
+            option = VERIFICATION;
+        else if (strcmp(slovo, "solve") == 0)
+            option = SOLUTION;
+        else if (strcmp(slovo, "exit") == 0)
+            option = EXIT;
+
         switch(option)
             {
             case VERIFICATION:
@@ -100,6 +110,7 @@ int main()
             }
         }
     }
+
 int InputCoeff(Coeff* coef)
     {
 
