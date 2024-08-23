@@ -8,13 +8,18 @@
 #include <string>
 #include <ctype.h>
 
+enum ErrorType
+    {
+    ERROR_SOLVE = 1,
+    ERROR_EOF   = 1,
+    };
 
 enum CountRoots
     {
     ROOTS_INF = -1,
     ROOTS_NO  =  0,
     ROOTS_1   =  1,
-    ROOTS_2   =  2
+    ROOTS_2   =  2,
     };
 
 enum Options
@@ -22,6 +27,7 @@ enum Options
     NONE         = 0,
     VERIFICATION = 1,
     SOLUTION     = 2,
+    EXIT         = 3,
     };
 
 struct Coeff
@@ -55,46 +61,50 @@ int CleanBuffer();
 int main()
     {
     setlocale(LC_ALL, "Rus");
-    int flag = 9;
-    while (flag == 9)
+    bool play_prog = true;
+    while (play_prog == true)
         {
-        printf("проверка или решение собственного уравнения?\n"
-           "если проверка введите 1                     \n"    // tests (t)
-           "если собственное введите 2                  \n");  // solve (s)
+        printf("\nпроверка или решение собственного уравнения?    \n"
+               "если проверка введите 1                         \n"    // tests (t)
+               "если собственное введите 2                      \n"
+               "если хотите закончить работу программы введите 3\n");  // solve (s)
 
-    int option = 0;                 // enum
-    scanf("%d", &option);
-    switch(option)
-        {
-        case VERIFICATION:
-            RunAllTests();
-            break;
-        case SOLUTION:
+        Options option = 0;                 // enum
+        scanf("%d", &option);
+        switch(option)
             {
-            Coeff coef = {NAN, NAN, NAN};
-            int r = InputCoeff(&coef);
+            case VERIFICATION:
+                RunAllTests();
+                break;
+            case SOLUTION:
+                {
+                Coeff coef = {NAN, NAN, NAN};
+                int r = InputCoeff(&coef);
 
-            if (r == 1)
-                return 0;
+                if (r == 1)
+                    return 0;
 
-            double x1 = NAN, x2 = NAN;
+                double x1 = NAN, x2 = NAN;
 
-            CountRoots out_solver = SolveEquation(&coef, &x1, &x2);
+                CountRoots out_solver = SolveEquation(&coef, &x1, &x2);
 
-            OutputSolve(out_solver, x1, x2);
-            break;
+                OutputSolve(out_solver, x1, x2);
+                break;
+                }
+            case EXIT:
+                play_prog = false;
+                break;
+            case NONE:
+            default: printf("ошибка выбора");
+                return 1;
             }
-        case NONE:
-        default: printf("ошибка выбора");
-            return 1;
         }
-    }
     }
 int InputCoeff(Coeff* coef)
     {
 
-    //assert
-    // assert
+    assert (coef != nullptr);
+
     printf("введи коэфы a, b, c \n");
 
     bool correct_input = false;
@@ -113,7 +123,7 @@ int InputCoeff(Coeff* coef)
             if (resclean == EOF)
                 {
                 printf("файл закончился!!!!!");
-                return 1;
+                return ERROR_EOF;
                 }
             else
                 {
@@ -125,26 +135,24 @@ int InputCoeff(Coeff* coef)
         return 0;
     }
 
-
-// enum ErrorType
 int OutputSolve(int out_solver, double x1, double x2)
     {
     switch(out_solver)
         {
         case ROOTS_NO:
-            printf("корней нет");
+            printf("корней нет\n");
             break;
         case ROOTS_1:
-            printf("один корень x=%lg", x1);
+            printf("один корень x=%lg\n", x1);
             break;
         case ROOTS_2:
-            printf("два корня x1=%lg и x2=%lg", x1, x2);
+            printf("два корня x1=%lg и x2=%lg\n", x1, x2);
             break;
         case ROOTS_INF:
-            printf("тут корней уж очень много");
+            printf("тут корней уж очень много\n");
             break;
-        default: printf("error");
-            return 1;  // bool
+        default: printf("error\n");
+            return ERROR_SOLVE;
         }
     return 0;
     }
@@ -216,7 +224,16 @@ int RunAllTests()
 
 int RunTest(TestData* VData)
     {
-    // assert
+
+    assert (VData != nullptr);
+    assert (isfinite (VData->a));
+    assert (isfinite (VData->b));
+    assert (isfinite (VData->c));
+    //assert (isfinite (VData->x1Exp));
+    //assert (isfinite (VData->x2Exp));
+    assert (isfinite (VData->nTest));
+    assert (isfinite (VData->nRootsExp));
+
     double x1 = NAN, x2 = NAN;
     Coeff coef = {VData->a, VData->b, VData->c};
     int nRoots = SolveEquation(&coef, &x1, &x2);
@@ -252,7 +269,7 @@ int CleanBuffer()
 
 CountRoots linear(double b, double c, double* x1)
     {
-    // assert
+    assert (x1 != nullptr);
     if (Compare(b, 0))
         {
         return (Compare(c, 0)) ? ROOTS_INF : ROOTS_NO;
