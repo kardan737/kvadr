@@ -40,12 +40,12 @@ int InputCoeff(Coeff* coef)
 
             if (resclean == EOF)
                 {
-                printf("файл закончился!!!!!");
+                printf("%sфайл закончился!!!!!%s", RED, RESET);
                 return ERROR_EOF;
                 }
             else
                 {
-                printf("ошибка ввода!!!!!\nвведите данные ещё раз\n");
+                printf("%sошибка ввода!!!!!\nвведите данные ещё раз%s\n", RED, RESET);
                 }
             }
         }

@@ -33,13 +33,13 @@ int RunTest(TestData* VData)
         && !Compare(x2, VData->x2Exp)
         && !Compare(nRoots, VData->nRootsExp))
         {
-        printf("Test %d fail a = %lg, b = %lg, c = %lg, x1Exp = %lg, x2Exp = %lg, x1 = %lg,"
-               "x2 = %lg, nRootsExp = %d, nRoots = %d", VData->nTest, VData->a, VData->b, VData->c, VData->x1Exp, VData->x2Exp,
-                x1, x2, VData->nRootsExp, nRoots);
+        printf("%sTest %d fail a = %lg, b = %lg, c = %lg, x1Exp = %lg, x2Exp = %lg, x1 = %lg,"
+               "x2 = %lg, nRootsExp = %d, nRoots = %d%s\n", RED, VData->nTest, VData->a, VData->b, VData->c, VData->x1Exp, VData->x2Exp,
+                x1, x2, VData->nRootsExp, nRoots, RESET);
         }
     else
         {
-        printf("тест %d успешено пройден\n", VData->nTest);
+        printf("%sтест %d успешено пройден%s\n", GREEN, VData->nTest, RESET);
         }
 
     return 0;

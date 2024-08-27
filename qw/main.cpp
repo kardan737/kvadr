@@ -25,9 +25,9 @@ int main()
     while (play_prog == true)
         {
         printf("\nпроверка или решение собственного уравнения?     \n"
-               "если проверка введите test                         \n"
-               "если собственное введите solve                     \n"
-               "если хотите закончить работу программы введите exit\n");
+               "если проверка введите %stest%s                         \n"
+               "если собственное введите %ssolve%s                     \n"
+               "если хотите закончить работу программы введите %sexit%s\n", BLUE, RESET, BLUE, RESET, BLUE, RESET);
 
         int option = 0;
 
@@ -65,8 +65,7 @@ int main()
                 play_prog = false;
                 break;
             case NONE:
-            default: printf("ошибка выбора");
-                return 1;
+            default: printf("%sошибка выбора%s\n", RED, RESET);
             }
         }
     }

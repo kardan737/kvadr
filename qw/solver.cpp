@@ -4,7 +4,12 @@
 #include "int_out.h"
 #include "tests.h"
 
-CountRoots SolveLinear(double b, double c, double* x1)  // SolveLinear
+int Compare(double x, double y)
+    {
+    return (fabs(y - x) < 0.0001);              //todo   // const // погрешность // error
+    }
+
+CountRoots SolveLinear(double b, double c, double* x1)
     {
     assert (x1 != nullptr);
     if (Compare(b, 0))
@@ -16,11 +21,6 @@ CountRoots SolveLinear(double b, double c, double* x1)  // SolveLinear
         *x1 = -c / b;
         return ROOTS_1;
         }
-    }
-
-int Compare(double x, double y)
-    {
-    return (fabs(y - x) < 0.0001);              //todo   // const // погрешность // error
     }
 
 CountRoots SolveEquation(Coeff* coef, double* x1, double* x2)
