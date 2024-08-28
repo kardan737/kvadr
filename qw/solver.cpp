@@ -6,7 +6,7 @@
 
 int Compare(double x, double y)
     {
-    return (fabs(y - x) < 0.0001);              //todo   // const // погрешность // error
+    return (fabs(y - x) < 0.0001);
     }
 
 CountRoots SolveLinear(double b, double c, double* x1)
@@ -39,6 +39,7 @@ CountRoots SolveEquation(Coeff* coef, double* x1, double* x2)
         CountRoots linear_Root = SolveLinear(coef->b, coef->c, x1);
         return linear_Root;
         }
+
     else
         {
         double D = coef->b * coef->b - 4 * coef->a * coef->c;
@@ -46,11 +47,13 @@ CountRoots SolveEquation(Coeff* coef, double* x1, double* x2)
             {
             return ROOTS_NO;
             }
+
         else if (Compare(D, 0))
             {
             *x1 = -coef->b / (2 * coef->a);
             return ROOTS_1;
             }
+
         else
             {
             double sqrt_D = sqrt(D);

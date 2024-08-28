@@ -10,41 +10,52 @@
 
 #include "equation.h"
 #include "int_out.h"
+//#include "int_out.h"
+
 #include "tests.h"
 
 
 // Doxygen docs
 //
 // argc argv -- аргументы командной строки
-// ./solve.exe --tests
-// ./solve.exe
+
 int main()
     {
     setlocale(LC_ALL, "Rus");
     bool play_prog = true;
+    printf(rt, BLUE, RESET, RED, RESET);
+
     while (play_prog == true)
         {
-        printf("\nпроверка или решение собственного уравнения?     \n"
+        printf("\nпроверка или решение собственного уравнения?         \n"
                "если проверка введите %stest%s                         \n"
                "если собственное введите %ssolve%s                     \n"
                "если хотите закончить работу программы введите %sexit%s\n", BLUE, RESET, BLUE, RESET, BLUE, RESET);
 
         int option = 0;
 
-        char slovo[5];
+        char slovo[5] = {0};
         scanf("%s", slovo);
 
         if (strcmp(slovo, "test") == 0)
             option = VERIFICATION;
+
         else if (strcmp(slovo, "solve") == 0)
             option = SOLUTION;
+
         else if (strcmp(slovo, "exit") == 0)
             option = EXIT;
+
+        else if (strcmp(slovo, "RTRTRT") == 0)
+            option = RT;
 
         switch(option)
             {
             case VERIFICATION:
                 RunAllTests();
+                break;
+            case RT:
+                printf(seagull);
                 break;
             case SOLUTION:
                 {

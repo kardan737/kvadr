@@ -1,6 +1,3 @@
-//#include "tests.h"
-//#include "solver.h"
-//#include "compare.h"
 #include <stdio.h>
 #include <cassert>
 #include <math.h>
@@ -37,10 +34,9 @@ int RunTest(TestData* VData)
                "x2 = %lg, nRootsExp = %d, nRoots = %d%s\n", RED, VData->nTest, VData->a, VData->b, VData->c, VData->x1Exp, VData->x2Exp,
                 x1, x2, VData->nRootsExp, nRoots, RESET);
         }
+
     else
-        {
         printf("%sтест %d успешено пройден%s\n", GREEN, VData->nTest, RESET);
-        }
 
     return 0;
     }
