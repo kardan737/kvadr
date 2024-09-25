@@ -19,16 +19,19 @@ enum ErrorType
     ADDR_DECLARATION_ERROR  = 4,
     };
 
-struct lineStartEnd
+struct lineStartLen
     {
-    char* startStr,
-          endStr;
+    char* startStr;
+    size_t   lenStr;
     };
 
 
-int Compare(char* line_1, char* line_2);
-int MySort(char** addr, int countLine);
-int RevCompare(char* line_1, char* line_2);
+int Compare(lineStartLen line_1, lineStartLen line_2);
+int MySort(lineStartLen* featureLine, int countLine);
+int RevCompare(lineStartLen line_1, lineStartLen line_2);
+int AddrLine(lineStartLen* featureLine, char* buffer, int sizeFile);
+size_t SizeFile(FILE* fp);
+int CountLine(char* buffer, size_t sizeFile);
 
 
 int main()
@@ -41,9 +44,7 @@ int main()
         return OPENING_ERROR;
         }
 
-    fseek(fp , 0 , SEEK_END);
-    long sizeFile = ftell(fp);
-    rewind(fp);
+    size_t sizeFile = SizeFile(fp);
 
     char* buffer = (char*)calloc(sizeFile + 1, sizeof(char));
     if (buffer == NULL)
@@ -62,8 +63,148 @@ int main()
 
     fclose(fp);
 
+    int countLine = CountLine(buffer, sizeFile);
+
+    printf("%d\n\n", countLine);
+
+    lineStartLen* featureLine = (lineStartLen*)calloc(countLine, sizeof(lineStartLen));
+
+    if (featureLine == nullptr)
+        {
+        printf("ADDRESSES_DECLARATION_ERROR\n");
+        return ADDR_DECLARATION_ERROR;
+        }
+
+    AddrLine(featureLine, buffer, sizeFile);
+
+    MySort(featureLine, countLine);
+
+    for (int i = 0; i < countLine; i++)    // make as func
+        {
+        printf("%s\n", featureLine[i].startStr);
+        }
+
+    // print default, then reverse and then original
+
+    free(buffer);
+    free(featureLine);
+    printf("hskjhsfjsfhskjfhsd");
+    }
+
+int MySort(lineStartLen* featureLine, int countLine) // pass comparator as argument
+    {
+    assert(featureLine != nullptr);
+
+    for (int i = 0; i < countLine - 1; i++)
+        {
+        for (int j = 0; j < countLine - i - 1; j++)
+            {
+            if (Compare(featureLine[j], featureLine[j+1]) == SWAP)
+                {
+                lineStartLen flam = featureLine[j];
+                featureLine[j] = featureLine[j+1];
+                featureLine[j+1] = flam;
+                }
+            }
+        }
+
+    return 0;
+    }
+////////////////////////////////////////////////
+
+
+
+
+
+int Compare(lineStartLen line_1, lineStartLen line_2)
+    {
+    //assert(line_1 != nullptr);
+    //assert(line_2 != nullptr);
+    printf("sdgsd");
+    int index_1 = 0;
+    char* addr_1 = line_1.startStr;
+
+    int index_2 = 0;
+    char* addr_2 = line_2.startStr;
+
+
+    while (addr_1[index_1] != '\0' && addr_2[index_2] != '\0')
+        {
+        while (isalpha(addr_1[index_1]) == 0)
+            index_1++;
+
+        while (isalpha(addr_2[index_2]) == 0)
+            index_2++;
+
+        if (tolower(addr_1[index_1]) - tolower(addr_2[index_2]) > 0)
+            return SWAP;
+
+        if (tolower(addr_1[index_1]) - tolower(addr_2[index_2]) < 0)
+            return GOOD_ORDER;
+        index_1++;
+        index_2++;
+        }
+    if (addr_1[index_1] == '\0' && addr_2[index_2] != '\0')
+        return GOOD_ORDER;
+
+    if (addr_1[index_1] != '\0' && addr_2[index_2] == '\0')
+        return SWAP;
+
+    if (addr_1[index_1] == '\0' && addr_2[index_2] == '\0')
+        return EQUAL;
+    return 0;
+    }
+
+int RevCompare(lineStartLen line_1, lineStartLen line_2)
+    {
+
+    int index_1 = line_1.lenStr - 1;
+    char* addr_1 = line_1.startStr;
+
+    int index_2 = line_2.lenStr - 1;
+    char* addr_2 = line_2.startStr;
+
+    //assert(addr_1 != nullptr);
+    //assert(addr_2 != nullptr);    как избавиться от этого дерьма.................(
+
+    while (index_1 != -1 && index_2 != -1)
+        {
+        while ((isalpha(addr_1[index_1]) == 0) && (index_1 >= 0))
+            index_1--;  // TODO: make as func
+
+        while ((isalpha(addr_2[index_2]) == 0) && (index_2 >= 0))
+            index_2--;
+
+        if ((tolower(addr_1[index_1]) - tolower(addr_2[index_2]) > 0) ||
+            ((index_2 == -1) && (index_1 > -1)))
+
+            return SWAP;
+
+        if ((tolower(addr_1[index_1]) - tolower(addr_2[index_2]) < 0) ||
+            ((index_1 == -1) && (index_2 > -1)))
+
+            return GOOD_ORDER;
+
+        index_1--;
+        index_2--;
+        }
+
+    return 0;
+    }
+
+size_t SizeFile(FILE* fp)
+    {
+    fseek(fp, 0, SEEK_END);
+    size_t sizeFile = ftell(fp);
+    rewind(fp);
+
+    return sizeFile;
+    }
+
+int CountLine(char* buffer, size_t sizeFile)
+    {
     int countLine = 0;
-    for (int i = 0; i < sizeFile; i++)
+    for (size_t i = 0; i < sizeFile; i++)
         {
         if (buffer[i] == '\r')
             buffer[i] = '\0';
@@ -73,131 +214,37 @@ int main()
             buffer[i] = '\0';
             }
         }
-    buffer[sizeFile + 1] = '\0';
+    buffer[sizeFile] = '\0';
+
+    return countLine;
+    }
 
 
-    char** addr = (char**)calloc(countLine, sizeof(char*));
-    if (addr == NULL)
+int AddrLine(lineStartLen* featureLine, char* buffer, int sizeFile)
+    {
+    char* start_line = buffer;
+    int number_line = 0;
+
+    for (int i = 0; i < sizeFile - 1; i++)
         {
-        printf("ADDRESSES_DECLARATION_ERROR");
-        return ADDR_DECLARATION_ERROR;
-        }
+        int len = 0;
 
-    addr[0] = buffer;
-    int countAddr = 1;
-    for (int i = 1; i < sizeFile; i++)
-        {
-
-        if (buffer[i] != '\0' && buffer[i - 1] == '\0')
+        while (buffer[i] != '\0')  // why while here?
             {
-            addr[countAddr] = buffer + i;
-            ++countAddr;
+            len++;                                                       // как убрать нулевые одреса когда несколько \n
+            i++;                                                         //ломается на большом количестве \n
             }
-        }
 
-    MySort(addr, countLine);
-
-    for (int i = 0; i < countLine; i++)
-        {
-        printf("%s\n", addr[i]);
-        }
-
-    free(buffer);
-    free(addr);
-
-    }
-
-int MySort(char** addr, int countLine)
-    {
-    assert(addr != nullptr);
-
-    for (int i = 0; i < countLine - 2; i++)
-        {
-        for (int j = 0; j < countLine - i - 1; j++)
+        if (len > 0)
             {
-            if (RevCompare(addr[j], addr[j+1]) == SWAP)
-                {
-                char* flam = addr[j];
-                addr[j] = addr[j+1];
-                addr[j+1] = flam;
-                }
+            featureLine[number_line] = {start_line, len};
+            number_line++;
+            len = 0;
             }
+
+        if (buffer[i] == '\0' && buffer[i+1] != '\0')
+            start_line = buffer + i + 1;
         }
-    }
 
-
-int Compare(char* line_1, char* line_2)
-    {
-    assert(line_1 != nullptr);
-    assert(line_2 != nullptr);
-
-    int flag_l_1 = 0,
-        flag_l_2 = 0;
-
-    while (line_1[flag_l_1] != '\0' && line_2[flag_l_2] != '\0')
-        {
-        while (isalpha(line_1[flag_l_1]) == 0)
-            flag_l_1++;
-
-        while (isalpha(line_2[flag_l_2]) == 0)
-            flag_l_2++;
-
-        if (tolower(line_1[flag_l_1]) - tolower(line_2[flag_l_2]) > 0)
-            return SWAP;
-
-        if (tolower(line_1[flag_l_1]) - tolower(line_2[flag_l_2]) < 0)
-            return GOOD_ORDER;
-        flag_l_1++;
-        flag_l_2++;
-        }
-    if (line_1[flag_l_1] == '\0' && line_2[flag_l_2] != '\0')
-        return GOOD_ORDER;
-
-    if (line_1[flag_l_1] != '\0' && line_2[flag_l_2] == '\0')
-        return SWAP;
-
-    if (line_1[flag_l_1] == '\0' && line_2[flag_l_2] == '\0')
-        return EQUAL;
-    }
-
-int RevCompare(char* line_1, char* line_2)
-    {
-    assert(line_1 != nullptr);
-    assert(line_2 != nullptr);
-
-    int flag_l_1 = 0,
-        flag_l_2 = 0;
-
-    while (line_1[flag_l_1] != '\0')
-        flag_l_1++;
-
-    while (line_2[flag_l_2] != '\0')
-        flag_l_2++;
-
-    flag_l_1--;
-    flag_l_2--;
-
-    while (flag_l_1 != -1 && flag_l_2 != -1)
-        {
-        while ((isalpha(line_1[flag_l_1]) == 0) && (flag_l_1 >= 0))
-            flag_l_1--;
-
-        while ((isalpha(line_2[flag_l_2]) == 0) && (flag_l_2 >= 0))
-            flag_l_2--;
-
-        if (tolower(line_1[flag_l_1]) - tolower(line_2[flag_l_2]) > 0)
-            return SWAP;
-
-        if (tolower(line_1[flag_l_1]) - tolower(line_2[flag_l_2]) < 0)
-            return GOOD_ORDER;
-
-        if ((flag_l_1 == -1) && (flag_l_2 > -1))
-            return GOOD_ORDER;
-
-        if ((flag_l_2 == -1) && (flag_l_1 > -1))
-            return SWAP;
-
-        flag_l_1--;
-        flag_l_2--;
-        }
+    return 0;
     }
