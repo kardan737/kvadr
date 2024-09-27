@@ -26,17 +26,23 @@ struct lineStartLen
     };
 
 
+
 int Compare(lineStartLen line_1, lineStartLen line_2);
-int MySort(lineStartLen* featureLine, int countLine);
+int MySort(lineStartLen* featureLine, int countLine, int (*Comparee)(lineStartLen line_1, lineStartLen line_2));
 int RevCompare(lineStartLen line_1, lineStartLen line_2);
-int AddrLine(lineStartLen* featureLine, char* buffer, int sizeFile);
+lineStartLen* AddrLine(char* buffer, int sizeFile, int countLine);
 size_t SizeFile(FILE* fp);
 int CountLine(char* buffer, size_t sizeFile);
+void Record(FILE* sorted, int countLine, lineStartLen* featureLine);
+char* buffering(int sizeFile, FILE* fp);
+lineStartLen* RememberAddr(lineStartLen* featureLine, int countLine);
+
 
 
 int main()
     {
     FILE* fp = fopen("onegin.txt", "rb");
+    FILE* sorted = fopen("onegin_sorted.txt", "w+");
 
     if (!fp)
         {
@@ -46,60 +52,40 @@ int main()
 
     size_t sizeFile = SizeFile(fp);
 
-    char* buffer = (char*)calloc(sizeFile + 1, sizeof(char));
-    if (buffer == NULL)
-        {
-        printf("MEMORY_ALLOCATION_ERROR");
-        return MEMORY_ALLOCATION_ERROR;
-        }
-
-    size_t result = fread(buffer, sizeof(char), sizeFile, fp);
-
-    if (sizeFile != result)
-        {
-        printf("READING_FILE_ERROR");
-        return READING_ERROR;
-        }
+    char* buffer = buffering(sizeFile, fp);
 
     fclose(fp);
 
     int countLine = CountLine(buffer, sizeFile);
 
-    printf("%d\n\n", countLine);
+    lineStartLen* featureLine = AddrLine(buffer, sizeFile, countLine);
 
-    lineStartLen* featureLine = (lineStartLen*)calloc(countLine, sizeof(lineStartLen));
+    lineStartLen* originalAddr = RememberAddr(featureLine, countLine);
 
-    if (featureLine == nullptr)
-        {
-        printf("ADDRESSES_DECLARATION_ERROR\n");
-        return ADDR_DECLARATION_ERROR;
-        }
+    MySort(featureLine, countLine, &Compare);
+    Record(sorted, countLine, featureLine);
 
-    AddrLine(featureLine, buffer, sizeFile);
+    MySort(featureLine, countLine, &RevCompare);
+    Record(sorted, countLine, featureLine);
 
-    MySort(featureLine, countLine);
-
-    for (int i = 0; i < countLine; i++)    // make as func
-        {
-        printf("%s\n", featureLine[i].startStr);
-        }
-
-    // print default, then reverse and then original
+    Record(sorted, countLine, originalAddr);
 
     free(buffer);
     free(featureLine);
-    printf("hskjhsfjsfhskjfhsd");
+    free(originalAddr);
     }
 
-int MySort(lineStartLen* featureLine, int countLine) // pass comparator as argument
+
+int MySort(lineStartLen* featureLine, int countLine, int (*Comparee)(lineStartLen line_1, lineStartLen line_2))
     {
     assert(featureLine != nullptr);
+    assert(Comparee != nullptr);
 
     for (int i = 0; i < countLine - 1; i++)
         {
         for (int j = 0; j < countLine - i - 1; j++)
             {
-            if (Compare(featureLine[j], featureLine[j+1]) == SWAP)
+            if (Comparee(featureLine[j], featureLine[j+1]) == SWAP)
                 {
                 lineStartLen flam = featureLine[j];
                 featureLine[j] = featureLine[j+1];
@@ -110,23 +96,19 @@ int MySort(lineStartLen* featureLine, int countLine) // pass comparator as argum
 
     return 0;
     }
-////////////////////////////////////////////////
-
-
-
 
 
 int Compare(lineStartLen line_1, lineStartLen line_2)
     {
-    //assert(line_1 != nullptr);
-    //assert(line_2 != nullptr);
-    printf("sdgsd");
+
     int index_1 = 0;
     char* addr_1 = line_1.startStr;
 
     int index_2 = 0;
     char* addr_2 = line_2.startStr;
 
+    assert(addr_1 != nullptr);
+    assert(addr_2 != nullptr);
 
     while (addr_1[index_1] != '\0' && addr_2[index_2] != '\0')
         {
@@ -144,6 +126,7 @@ int Compare(lineStartLen line_1, lineStartLen line_2)
         index_1++;
         index_2++;
         }
+
     if (addr_1[index_1] == '\0' && addr_2[index_2] != '\0')
         return GOOD_ORDER;
 
@@ -152,8 +135,10 @@ int Compare(lineStartLen line_1, lineStartLen line_2)
 
     if (addr_1[index_1] == '\0' && addr_2[index_2] == '\0')
         return EQUAL;
+
     return 0;
     }
+
 
 int RevCompare(lineStartLen line_1, lineStartLen line_2)
     {
@@ -164,13 +149,13 @@ int RevCompare(lineStartLen line_1, lineStartLen line_2)
     int index_2 = line_2.lenStr - 1;
     char* addr_2 = line_2.startStr;
 
-    //assert(addr_1 != nullptr);
-    //assert(addr_2 != nullptr);    как избавиться от этого дерьма.................(
+    assert(addr_1 != nullptr);
+    assert(addr_2 != nullptr);
 
     while (index_1 != -1 && index_2 != -1)
         {
         while ((isalpha(addr_1[index_1]) == 0) && (index_1 >= 0))
-            index_1--;  // TODO: make as func
+            index_1--;                                          // TODO: make as func
 
         while ((isalpha(addr_2[index_2]) == 0) && (index_2 >= 0))
             index_2--;
@@ -192,8 +177,11 @@ int RevCompare(lineStartLen line_1, lineStartLen line_2)
     return 0;
     }
 
+
 size_t SizeFile(FILE* fp)
     {
+    assert(fp != nullptr);
+
     fseek(fp, 0, SEEK_END);
     size_t sizeFile = ftell(fp);
     rewind(fp);
@@ -201,16 +189,28 @@ size_t SizeFile(FILE* fp)
     return sizeFile;
     }
 
+
 int CountLine(char* buffer, size_t sizeFile)
     {
+    assert(buffer != nullptr);
+
     int countLine = 0;
+    bool notEmptyStr = false;
     for (size_t i = 0; i < sizeFile; i++)
         {
+        if (isalpha(buffer[i]) != false)
+            notEmptyStr = true;
+
         if (buffer[i] == '\r')
             buffer[i] = '\0';
+
         if (buffer[i] == '\n')
             {
-            ++countLine;
+            if (notEmptyStr == true)
+                {
+                ++countLine;
+                notEmptyStr = false;
+                }
             buffer[i] = '\0';
             }
         }
@@ -220,8 +220,18 @@ int CountLine(char* buffer, size_t sizeFile)
     }
 
 
-int AddrLine(lineStartLen* featureLine, char* buffer, int sizeFile)
+lineStartLen* AddrLine(char* buffer, int sizeFile, int countLine)
     {
+    assert(buffer != nullptr);
+
+    lineStartLen* featureLine = (lineStartLen*)calloc(countLine, sizeof(lineStartLen));
+
+    if (featureLine == nullptr)
+        {
+        printf("ADDRESSES_DECLARATION_ERROR\n");
+
+        }
+
     char* start_line = buffer;
     int number_line = 0;
 
@@ -229,10 +239,10 @@ int AddrLine(lineStartLen* featureLine, char* buffer, int sizeFile)
         {
         int len = 0;
 
-        while (buffer[i] != '\0')  // why while here?
+        while (buffer[i] != '\0')
             {
-            len++;                                                       // как убрать нулевые одреса когда несколько \n
-            i++;                                                         //ломается на большом количестве \n
+            len++;
+            i++;
             }
 
         if (len > 0)
@@ -246,5 +256,59 @@ int AddrLine(lineStartLen* featureLine, char* buffer, int sizeFile)
             start_line = buffer + i + 1;
         }
 
-    return 0;
+    return featureLine;
+    }
+
+void Record(FILE* sorted, int countLine, lineStartLen* featureLine)
+    {
+    assert(sorted != nullptr);
+
+    fprintf(sorted, "//////////////////////////////////////////\n");
+
+    for (int i = 0; i < countLine; i++)
+        fprintf(sorted, "%s\n", featureLine[i].startStr);
+
+    fprintf(sorted, "//////////////////////////////////////////\n");
+    }
+
+char* buffering(int sizeFile, FILE* fp)
+    {
+    assert(fp != nullptr);
+
+    char* buffer = (char*)calloc(sizeFile + 1, sizeof(char));
+    if (buffer == NULL)
+        {
+        printf("MEMORY_ALLOCATION_ERROR");
+        exit(EXIT_FAILURE);
+        }
+
+    size_t result = fread(buffer, sizeof(char), sizeFile, fp);
+
+    if (sizeFile != result)
+        {
+        printf("READING_FILE_ERROR");
+        exit(EXIT_FAILURE);
+        }
+
+    return buffer;
+    }
+
+lineStartLen* RememberAddr(lineStartLen* featureLine, int countLine)
+    {
+    assert(featureLine != nullptr);
+
+    lineStartLen* originalAddr = (lineStartLen*)calloc(countLine, sizeof(lineStartLen));
+
+    if (originalAddr == nullptr)
+        {
+        printf("ADDRESSES_DECLARATION_ERROR\n");
+        exit(EXIT_FAILURE);
+        }
+
+    for (int i = 0; i < countLine; i++)
+        {
+        originalAddr[i].startStr = featureLine[i].startStr;
+        }
+
+    return originalAddr;
     }
